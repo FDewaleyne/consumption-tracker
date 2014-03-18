@@ -2,6 +2,8 @@
 #concept script to search the UUID of a system in the lab
 #testing only with satellite 5.6
 
+#rememeber : this should be done if there is no subscribed tag. 
+
 # Values in CF #
 #UUID = $evm.root['UUID']
 #SAT_URL = $evm.root['SAT_URL']
@@ -24,6 +26,7 @@ systems = @client.call('system.search.uuid',@key,@UUID)
 
 if systems.size > 1 then
 	# select the last checked in profile
+	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
 	last_system = nil
 	require "date"
 	systems.each do |system|
@@ -41,12 +44,23 @@ if systems.size > 1 then
 	end
 end
 
-#tag the vm with that system id tag here
-
-
+# tag the vm with that system id tag here
+# this code shouldn't be run on systems that already have a system ID ; if they already have it, then another script looking up the info and checking it is accurate should be used
 #tag the vm with all the channels used
-
-
+data = @client.call('system.getDetails',@key,last_system['id'])
+data['addon_entitlements'].each do |addon|
+	#tag with tle entitlement
+	#debug
+	puts addon
+end
+base_channel = @client.call('system.getSubscribedBaseChannel',@key,last_system['id'])
+#tag with base_channel['label'] part
+puts base_channel['label']
+child_channels = @client.call('system.listSubscribedChildChannels',@key,last_system['id'])
+child_channels.each do |channel|
+	#tag with channel['label']
+	puts channel['label']
+end
 
 # cleanup  #
 @client.call('auth.logout', @key)
