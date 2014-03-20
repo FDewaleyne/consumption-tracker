@@ -13,7 +13,7 @@
 # test values
 @UUID = "6fd52f34d57b4f808fa13474514ffe51"
 @SAT_URL = "http://rhns56-6.gsslab.fab.redhat.com/rpc/api"
-@SAT_LOGIN = "satadmin"
+@SAT_LOGIN = "orgadmin"
 @SAT_PWD = "redhat"
 
 # init part #
@@ -23,18 +23,17 @@ require "xmlrpc/client"
 
 # lookup for UUID #
 systems = @client.call('system.search.uuid',@key,@UUID)
-
 if systems.size > 1 then
 	# select the last checked in profile
 	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
-	last_system = nil
 	require "date"
 	systems.each do |system|
+		#debug
+		puts system
+		last_system = systems.first
 		# queue in a hardware refresh in the satellite to help clean the profile and identify profiles in use in different systems
 		@client.call('system.scheduleHardwareRefresh',@key, system['id'], Date.today)
-		if last_system == nil then
-			last_system = system
-		elsif last_system['last_checkin'].to_date < system['last_checkin'].to_date then
+		if last_system['last_checkin'].to_date < system['last_checkin'].to_date then
 			#the other system is more recent
 			last_system = system
 		else
@@ -42,6 +41,15 @@ if systems.size > 1 then
 			next;
 		end
 	end
+elsif systems.size == 1 then
+	last_system = systems.first
+	#debug
+	puts systems.first
+else
+	# no system found.
+	# raise error ?
+	last_system = nil
+	exit
 end
 
 # tag the vm with that system id tag here
@@ -64,5 +72,5 @@ end
 
 # cleanup  #
 @client.call('auth.logout', @key)
-#return MIQ_SUCCESS
+
 
