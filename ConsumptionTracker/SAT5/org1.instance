@@ -1,0 +1,7 @@
+#represents the content of instance org1
+
+url : https://satellite.example.com/rpc/api
+username : satadmin
+password : redhat
+orgid : 1
+

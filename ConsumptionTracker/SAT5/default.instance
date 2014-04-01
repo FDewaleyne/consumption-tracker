@@ -1,0 +1,10 @@
+values: 
+url
+username
+password
+#note : rethink this to get better password security
+
+methods :
+
+#onesystem : just return the best systemid for that UUID <<< first thing to do
+#onecluster : for each system of the cluster do the tagging
