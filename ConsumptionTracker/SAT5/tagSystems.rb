@@ -6,11 +6,34 @@ $evm.log("info", "Tagging all systems of one cluster - automation started")
 #            This script goes through the list of systems on the satellite and on the cluster selected, refreshing entirely the tag of the systems that are matching a system in satellite.
 #
 
+# Values in CF #
+#SAT_URL = $evm.root['SAT_URL']
+#SAT_LOGIN = $evm.root['SAT_LOG']
+
 # initialization
-@UUID = "6fd52f34d57b4f808fa13474514ffe51"
-@SAT_URL = "http://rhns56-6.gsslab.fab.redhat.com/rpc/api"
-@SAT_LOGIN = "orgadmin"
-@SAT_PWD = "redhat"
+@SAT_URL = $ems.root['url']
+@SAT_LOGIN = $ems.root['username']
+@SAT_PWD = $ems.root['password']
+@SATORG = $ems.root['orgid']
+
+#no need to do anything if the clust er is empty
+cluster = $evms.root['ems_cluster']
+if cluster.vms.nil? then
+	ems.log("info","the cluster is empty, nothing to do")
+	exit MIQ_OK
+end
+
+#making sure the categories required exist
+if not $evm.execute('category_exists?','registration') then
+	$evm.execute('category_create', :name => 'registration', :single_value => false, :description => 'Category holding the registration information for a machine')
+	$evm.execute('tag_create', :name => 'unregistered', :description => 'indicates a system not registered with a registration system')
+end
+if not $evm.execute('category_exists?','channel') then
+	$evm.execute('category_create',:name => 'channel', :single_value => false, :description => 'Category holding the channels systems are registered to')
+end
+if not $evm.execute('category_exists?','satellite5') then
+	$evm.execute('category_create',:name => 'satellite5', :single_value => false, :description => 'Information relative to satellite 5 registration')
+end
 
 #connect
 require "xmlrpc/client"
@@ -40,11 +63,52 @@ satsystems.each do |satsystem|
 	end
 end
 # now go through the list of systems in the cluster
-# for each vm remove any satellite tag
-# for each vm that matches add the satellite tags, otherwise tag as unregistered
+cluster.vms.each do |vm|
+	#TODO : tag removal of any registration and any channel tag - only if the system has an org tag of the org we are working on!
+	# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
+	if uuidcollection.has_key?(vm.attributes['uid_ems']) then
+		#TODO : implement checks for systems that previously had the tag - those should be removed the registration tag and tagged as duplicate (futureversion)
+		#TODO : investigate alternative to tagging like this that still allows to see systems sharing the same registration ID
+		registration_tag = 'sat5-id-'+uuidcollection[vm.attributes['uid_ems']].to_s()
+		if $evm.execute('tag_exists?', 'registration', registration_tag) then
+			$emv.execute ('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
+		end
+		vm.tag_assign('organization', registration_tag)
+		# org_id info
+		org_tag = 'org-'+@SATORG.to_s()
+		if $evm.execute('tag_exists?', 'satellite5', org_tag) then
+			orgdetails = @client.call('org.getDetails', @key, @SATORG)
+			$emv.execute ('tag_create', "satellite5", :name => org_tag, :description => orgdetails['name'] )
+		end
+		vm.tag_assign('satellite5', org_tag)
+		#base channel
+		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm.attributes['uid_ems']])
+		if $evm.execute('tag_exists?', 'channel', base['label']) then
+			$emv.execute ('tag_create', "channel", :name => base['label'], :description => base['name'])
+		end
+		vm.tag_assign('channel', base['label'])
+		#child channels
+		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm.attributes['uid_ems']])
+		childs.each do |channel|
+			if $evm.execute('tag_exists?', 'channel', channel['label']) then
+				$emv.execute ('tag_create', "channel", :name => channel['label'], :description => channel['name'])
+			end
+			vm.tag_assign('channel', channel['label'])
+		end
+		#entitlements
+		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm.attributes['uid_ems']])
+		entitlements.each do |entitlement|
+			if $evm.execute('tag_exists?', 'satellite5', entitlement) then
+				$emv.execute ('tag_create', "satellite5", :name => entitlement, :description => entitlement)
+			end
+			vm.tag_assign('satellite5', entitlement)
+		end
+	elsif /Red Hat/i.match(vm.operating_system).nil? then
+		#this is a red hat system that isn't registered on the satellite - tag is as unregistered
+		vm.tag_assign('registration', 'unregistered')
+	end
+end
 
-
-#
 #
 #
 $evm.log("info", "Tagging all systems of one cluster - automation finished")

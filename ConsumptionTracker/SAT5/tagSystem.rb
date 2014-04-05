@@ -6,6 +6,91 @@ $evm.log("info", "Tagging one system - automation started")
 #            Method Code Goes here
 #
 
+# Values in CF #
+SAT_URL = $evm.root['url']
+SAT_LOGIN = $evm.root['username']
+SAT_PWD = $evm.root['password']
+SATORG = $evm.root['orgid']
+vm = $evm.root['vm']
+
+# init part #
+require "xmlrpc/client"
+@client = XMLRPC::Client.new2(SAT_URL)
+@key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
+
+# lookup for UUID #
+systems = @client.call('system.search.uuid',@key,vm['uid_ems'])
+if systems.size > 1 then
+	# select the last checked in profile
+	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
+	require "date"
+	systems.each do |system|
+		#debug
+		puts system
+		last_system = systems.first
+		# queue in a hardware refresh in the satellite to help clean the profile and identify profiles in use in different systems
+		@client.call('system.scheduleHardwareRefresh',@key, system['id'], Date.today)
+		if last_system['last_checkin'].to_date < system['last_checkin'].to_date then
+			#the other system is more recent
+			last_system = system
+		else
+			#the date in the object is more recent than that of the others
+			next;
+		end
+	end
+elsif systems.size == 1 then
+	last_system = systems.first
+	#debug
+	puts systems.first
+else
+	# no system found.
+	# raise error ?
+	last_system = nil
+	exit
+end
+
+# tag the vm with that system id tag here
+# this code shouldn't be run on systems that already have a system ID ; if they already have it, then another script looking up the info and checking it is accurate should be used
+#TODO : tag removal of any registration and any channel tag - only if the system has an org tag matching the org we work from
+# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
+
+#TODO : implement checks for systems that previously had the tag - those should be removed the registration tag and tagged as duplicate (futureversion)
+#TODO : investigate alternative to tagging like this that still allows to see systems sharing the same registration ID
+registration_tag = 'sat5-id-'+vm.attributes.uid_ems.to_s()
+if $evm.execute('tag_exists?', 'registration', registration_tag) then
+	$emv.execute ('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
+end
+vm.tag_assign('organization', registration_tag)
+# org_id info
+org_tag = 'org-'+SATORG.to_s()
+vm.tag_assign('satellite5', org_tag)
+#base channel
+base = @client.call('system.getSubscribedBaseChannel',@key, vm.attributes['uid_ems'])
+if $evm.execute('tag_exists?', 'channel', base['label']) then
+	$emv.execute ('tag_create', "channel", :name => base['label'], :description => base['name'])
+end
+vm.tag_assign('channel', base['label'])
+#child channels
+childs = @client.call('system.listSubscribedChildChannels',@key,vm.attributes['uid_ems'])
+childs.each do |channel|
+	if $evm.execute('tag_exists?', 'channel', channel['label']) then
+		$emv.execute ('tag_create', "channel", :name => channel['label'], :description => channel['name'])
+	end
+	vm.tag_assign('channel', channel['label'])
+end
+#entitlements
+entitlements = @client.call('system.getEntitlements', @key, vm.attributes['uid_ems'])
+entitlements.each do |entitlement|
+	if $evm.execute('tag_exists?', 'satellite5', entitlement) then
+		$emv.execute ('tag_create', "satellite5", :name => entitlement, :description => entitlement)
+	end
+	vm.tag_assign('satellite5', entitlement)
+end
+
+# cleanup  #
+@client.call('auth.logout', @key)
+
+
 #
 #
 #
