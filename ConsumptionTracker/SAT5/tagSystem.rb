@@ -13,14 +13,28 @@ SAT_PWD = $evm.root['password']
 SATORG = $evm.root['orgid']
 vm = $evm.root['vm']
 
+
+# before we continue make sure that this is a RHEL system
+if /rhel/.match(vm.operating_system['product_name']).nil? then
+	$evm.log("info", "The system #{vm.name} is not a RHEL system, it will not be tagged")
+	exit MIQ_OK
+end
+
 # init part #
 require "xmlrpc/client"
 @client = XMLRPC::Client.new2(SAT_URL)
 @key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
 
+#remove registration and satellite 5 tags
+#we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
+vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(tag.to_s).nil? }
+
 # lookup for UUID #
-systems = @client.call('system.search.uuid',@key,vm['uid_ems'])
+systems = @client.call('system.search.uuid',@key,vm.attributes['uid_ems'])
 if systems.size > 1 then
+	# this system is duplicated!
+	vm.tag_assign("registration", "duplicated")
+	$evm.log("info","the system #{vm.name} has been registered several times")
 	# select the last checked in profile
 	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
 	require "date"
@@ -40,26 +54,17 @@ if systems.size > 1 then
 	end
 elsif systems.size == 1 then
 	last_system = systems.first
-	#debug
-	puts systems.first
 else
-	# no system found.
-	# raise error ?
+	# no system found. mark as unregistered
+	vm.tag_assign("registration","unregistered")
 	last_system = nil
-	exit
+	$evm.log("info","the system #{vm.name} is not registered to the satellite")
+	exit MIQ_OK
 end
 
-# tag the vm with that system id tag here
-# this code shouldn't be run on systems that already have a system ID ; if they already have it, then another script looking up the info and checking it is accurate should be used
-
-#remove registration and satellite 5 tags
-#we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
-vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(tag.to_s).nil? }
-
-
-#TODO : investigate alternative to tagging like this that still allows to see systems sharing the same registration ID
+#tagging with the informations since this system is registered
 registration_tag = 'sat5-id-'+vm.attributes.uid_ems.to_s()
-if $evm.execute('tag_exists?', 'registration', registration_tag) then
+if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 	$emv.execute ('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 end
 vm.tag_assign('organization', registration_tag)
