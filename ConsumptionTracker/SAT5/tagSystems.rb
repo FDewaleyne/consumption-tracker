@@ -66,16 +66,13 @@ satsystems.each do |satsystem|
 end
 # now go through the list of systems in the cluster
 cluster.vms.each do |vm|
-	#TODO : tag removal of any registration and any channel tag - only if the system has an org tag of the org we are working on!
+	#TODO v2 : add here a condition to stop if a tag from another registration system is present.
+	#remove registration and satellite 5 tags
+	#we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
+	vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(tag.to_s).nil?}
+
 	# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
 	if uuidcollection.has_key?(vm.attributes['uid_ems']) then
-		#TODO v2 : add here a condition to stop if a tag from another registration system is present.
-		#remove registration and satellite 5 tags
-		#we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
-		vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(tag.to_s).nil?}
-		remove_those.each do |tag|
-			vm.tags.delete(tag)
-		end
 		#TODO : investigate alternative to tagging like this that still allows to see systems sharing the same registration ID
 		registration_tag = 'sat5-id-'+uuidcollection[vm.attributes['uid_ems']].to_s()
 		if $evm.execute('tag_exists?', 'registration', registration_tag) then
