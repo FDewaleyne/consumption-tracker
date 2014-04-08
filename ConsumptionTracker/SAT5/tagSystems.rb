@@ -80,7 +80,7 @@ cluster.vms.each do |vm|
 		vm.tag_assign('organization', registration_tag)
 		# org_id info
 		org_tag = 'org-'+SATORG.to_s()
-		if $evm.execute('tag_exists?', 'satellite5', org_tag) then
+		if not $evm.execute('tag_exists?', 'satellite5', org_tag) then
 			orgdetails = @client.call('org.getDetails', @key, SATORG)
 			$emv.execute ('tag_create', "satellite5", :name => org_tag, :description => orgdetails['name'] )
 		end
@@ -110,7 +110,7 @@ cluster.vms.each do |vm|
 		#duplicate indication
 		if uuidcollection[vm.attributes['uid_ems']]['count'] > 1:
 			vm.tag_assign('registration','duplicated')
-	elsif /rhel/.match(vm.operating_system['product_name']).nil? then
+	elsif not /rhel/.match(vm.operating_system['product_name']).nil? then
 		#this is a red hat system that isn't registered on the satellite - tag is as unregistered
 		vm.tag_assign('registration', 'unregistered')
 	end
