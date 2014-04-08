@@ -47,7 +47,7 @@ satsystems.each do |satsystem|
 	satsystem.uuid = @client.call('system.getUUID',@key,satsystem.id)
 	if uuidcollection.has_key?(satsystem.uuid) then
 		#we have a duplicate, increase count by one
-		uuidcollection[system.uuid].counter += 1
+		uuidcollection[system.uuid]['count'] += 1
 		#schedule a hardware refresh so that the next call to any tagger is accurate
 		@client.call('system.scheduleHardwareRefresh',@key, system['id'], Date.today)
 		#check if the uuid for that entry is newer than what we already have
