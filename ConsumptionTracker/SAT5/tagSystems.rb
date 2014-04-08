@@ -119,7 +119,6 @@ end
 
 #cleanup
 @client.call("auth.logout",@key)
-	     
 
 #
 #
