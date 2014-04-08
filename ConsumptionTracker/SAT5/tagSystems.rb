@@ -44,21 +44,21 @@ satsystems = @client.call('system.listSystems',@key)
 uuidcollection = Hash.new
 #update the list of systems to include the UUID for each system
 satsystems.each do |satsystem| 
-	satsystem.uuid = @client.call('system.getUUID',@key,satsystem.id)
-	if uuidcollection.has_key?(satsystem.uuid) then
+	uuid = @client.call('system.getUUID',@key,satsystem['id'])
+	if uuidcollection.has_key?(uuid) then
 		#we have a duplicate, increase count by one
-		uuidcollection[system.uuid]['count'] += 1
+		uuidcollection[uuid]['count'] += 1
 		#schedule a hardware refresh so that the next call to any tagger is accurate
-		@client.call('system.scheduleHardwareRefresh',@key, system['id'], Date.today)
+		@client.call('system.scheduleHardwareRefresh',@key, satsystem['id'], Date.today)
 		#check if the uuid for that entry is newer than what we already have
-		if uuidcollection[system.uuid]['last_checkin'].to_date < satsystem.last_checkin.to_date then
+		if uuidcollection[uuid]['last_checkin'].to_date < satsystem['last_checkin'].to_date then
 			#then the uuid for the system stored is older and is a duplicate
-			uuidcollection[system.uuid]['systemid'] = satsystem.id
-			uuidcollection[system.uuid]['last_checkin'] = satsystem.last_checkin
+			uuidcollection[uuid]['systemid'] = satsystem['id']
+			uuidcollection[uuid]['last_checkin'] = satsystem['last_checkin']
 		end
 	else
 		#new entry!
-		uuidcollection[system.uuid] = { "count" => 1, "systemid" => satsystem.id, "last_checkin" => satsystem.last_checkin }
+		uuidcollection[uuid] = { "count" => 1, "systemid" => satsystem['id'], "last_checkin" => satsystem['last_checkin'] }
 	end
 end
 # now go through the list of systems in the cluster
