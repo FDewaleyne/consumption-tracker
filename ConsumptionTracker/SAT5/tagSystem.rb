@@ -39,8 +39,6 @@ if systems.size > 1 then
 	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
 	require "date"
 	systems.each do |system|
-		#debug
-		puts system
 		last_system = systems.first
 		# queue in a hardware refresh in the satellite to help clean the profile and identify profiles in use in different systems
 		@client.call('system.scheduleHardwareRefresh',@key, system['id'], Date.today)
