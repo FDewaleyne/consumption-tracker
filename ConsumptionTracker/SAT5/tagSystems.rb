@@ -52,10 +52,11 @@ satsystems.each do |satsystem|
 		uuidcollection[system.uuid].counter += 1
 		#schedule a hardware refresh so that the next call to any tagger is accurate
 		@client.call('system.scheduleHardwareRefresh',@key, system['id'], Date.today)
-		if uuidcollection[system.uuid].last_checkin.to_date < satsystem.last_checkin.to_date then
+		#check if the uuid for that entry is newer than what we already have
+		if uuidcollection[system.uuid]['last_checkin'].to_date < satsystem.last_checkin.to_date then
 			#then the uuid for the system stored is older and is a duplicate
-			uuidcollection[system.uuid].systemid = satsystem.id
-			uuidcollection[system.uuid].last_checkin = satsystem.last_checkin
+			uuidcollection[system.uuid]['systemid'] = satsystem.id
+			uuidcollection[system.uuid]['last_checkin'] = satsystem.last_checkin
 		end
 	else
 		#new entry!
