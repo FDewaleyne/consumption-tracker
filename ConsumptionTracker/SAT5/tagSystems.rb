@@ -71,7 +71,7 @@ cluster.vms.each do |vm|
 	# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
 	if uuidcollection.has_key?(vm.attributes['uid_ems']) then
 		registration_tag = 'sat5-id-'+uuidcollection[vm.attributes['uid_ems']].to_s()
-		if $evm.execute('tag_exists?', 'registration', registration_tag) then
+		if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 			$emv.execute ('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 		end
 		vm.tag_assign('organization', registration_tag)
@@ -107,10 +107,14 @@ cluster.vms.each do |vm|
 		#duplicate indication
 		if uuidcollection[vm.attributes['uid_ems']]['count'] > 1:
 			vm.tag_assign('registration','duplicated')
+			$evm.log("info","the machine #{vm.name} has multiple profiles on the satellite")
 		end
 	elsif not /rhel/.match(vm.operating_system['product_name']).nil? then
 		#this is a red hat system that isn't registered on the satellite - tag is as unregistered
 		vm.tag_assign('registration', 'unregistered')
+		$emv.log("info","the machine #{vm.name} is not registered to the satellite")
+	else
+		$evm.log("info","the machine #{vm.name} is not a RHEL system - ignoring it")
 	end
 end
 

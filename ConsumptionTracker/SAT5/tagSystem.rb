@@ -34,7 +34,7 @@ systems = @client.call('system.search.uuid',@key,vm.attributes['uid_ems'])
 if systems.size > 1 then
 	# this system is duplicated!
 	vm.tag_assign("registration", "duplicated")
-	$evm.log("info","the system #{vm.name} has been registered several times")
+	$evm.log("info","the system #{vm.name} has multiple profiles on the satellite")
 	# select the last checked in profile
 	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
 	require "date"
