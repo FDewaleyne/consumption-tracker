@@ -6,9 +6,6 @@ $evm.log("info", "Tagging all systems of one cluster - automation started")
 #            This script goes through the list of systems on the satellite and on the cluster selected, refreshing entirely the tag of the systems that are matching a system in satellite.
 #
 
-# Values in CF #
-#SAT_URL = $evm.root['SAT_URL']
-#SAT_LOGIN = $evm.root['SAT_LOG']
 
 # initialization
 SAT_URL = $ems.root['url']
