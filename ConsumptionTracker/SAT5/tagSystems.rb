@@ -110,13 +110,20 @@ cluster.vms.each do |vm|
 		#duplicate indication
 		if uuidcollection[vm.attributes['uid_ems']]['count'] > 1:
 			vm.tag_assign('registration','duplicated')
+		end
 	elsif not /rhel/.match(vm.operating_system['product_name']).nil? then
 		#this is a red hat system that isn't registered on the satellite - tag is as unregistered
 		vm.tag_assign('registration', 'unregistered')
 	end
 end
 
+#cleanup
+@client.call("auth.logout",@key)
+	     
+
 #
 #
 $evm.log("info", "Tagging all systems of one cluster - automation finished")
+
+
 exit MIQ_OK
