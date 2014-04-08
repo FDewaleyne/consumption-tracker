@@ -51,10 +51,12 @@ end
 
 # tag the vm with that system id tag here
 # this code shouldn't be run on systems that already have a system ID ; if they already have it, then another script looking up the info and checking it is accurate should be used
-#TODO : tag removal of any registration and any channel tag - only if the system has an org tag matching the org we work from
-# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
 
-#TODO : implement checks for systems that previously had the tag - those should be removed the registration tag and tagged as duplicate (futureversion)
+#remove registration and satellite 5 tags
+#we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
+vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(tag.to_s).nil? }
+
+
 #TODO : investigate alternative to tagging like this that still allows to see systems sharing the same registration ID
 registration_tag = 'sat5-id-'+vm.attributes.uid_ems.to_s()
 if $evm.execute('tag_exists?', 'registration', registration_tag) then
@@ -66,14 +68,14 @@ org_tag = 'org-'+SATORG.to_s()
 vm.tag_assign('satellite5', org_tag)
 #base channel
 base = @client.call('system.getSubscribedBaseChannel',@key, vm.attributes['uid_ems'])
-if $evm.execute('tag_exists?', 'channel', base['label']) then
+if not $evm.execute('tag_exists?', 'channel', base['label']) then
 	$emv.execute ('tag_create', "channel", :name => base['label'], :description => base['name'])
 end
 vm.tag_assign('channel', base['label'])
 #child channels
 childs = @client.call('system.listSubscribedChildChannels',@key,vm.attributes['uid_ems'])
 childs.each do |channel|
-	if $evm.execute('tag_exists?', 'channel', channel['label']) then
+	if not $evm.execute('tag_exists?', 'channel', channel['label']) then
 		$emv.execute ('tag_create', "channel", :name => channel['label'], :description => channel['name'])
 	end
 	vm.tag_assign('channel', channel['label'])
@@ -81,7 +83,7 @@ end
 #entitlements
 entitlements = @client.call('system.getEntitlements', @key, vm.attributes['uid_ems'])
 entitlements.each do |entitlement|
-	if $evm.execute('tag_exists?', 'satellite5', entitlement) then
+	if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
 		$emv.execute ('tag_create', "satellite5", :name => entitlement, :description => entitlement)
 	end
 	vm.tag_assign('satellite5', entitlement)
