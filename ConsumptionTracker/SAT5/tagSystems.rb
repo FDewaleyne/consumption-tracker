@@ -87,7 +87,7 @@ cluster.vms.each do |vm|
 		vm.tag_assign('satellite5', org_tag)
 		#base channel
 		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm.attributes['uid_ems']])
-		if $evm.execute('tag_exists?', 'channel', base['label']) then
+		if not $evm.execute('tag_exists?', 'channel', base['label']) then
 			$emv.execute ('tag_create', "channel", :name => base['label'], :description => base['name'])
 		end
 		vm.tag_assign('channel', base['label'])
