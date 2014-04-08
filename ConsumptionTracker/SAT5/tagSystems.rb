@@ -102,7 +102,7 @@ cluster.vms.each do |vm|
 		#entitlements
 		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm.attributes['uid_ems']])
 		entitlements.each do |entitlement|
-			if $evm.execute('tag_exists?', 'satellite5', entitlement) then
+			if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
 				$emv.execute ('tag_create', "satellite5", :name => entitlement, :description => entitlement)
 			end
 			vm.tag_assign('satellite5', entitlement)
