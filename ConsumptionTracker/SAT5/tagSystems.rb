@@ -8,13 +8,13 @@ $evm.log("info", "Tagging all systems of one cluster - automation started")
 
 
 # initialization
-SAT_URL = $ems.object['url']
-SAT_LOGIN = $ems.object['username']
-SAT_PWD = $ems.object['password']
-SATORG = $ems.object['orgid']
+SAT_URL = $evm.object['url']
+SAT_LOGIN = $evm.object['username']
+SAT_PWD = $evm.object['password']
+SATORG = $evm.object['orgid']
 
 #no need to do anything if the clust er is empty
-cluster = $evms.root['ems_cluster']
+cluster = $evm.root['ems_cluster']
 if cluster.vms.nil? then
 	ems.log("info","the cluster is empty, nothing to do")
 	exit MIQ_OK

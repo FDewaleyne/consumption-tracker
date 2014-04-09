@@ -13,7 +13,6 @@ SAT_PWD = $evm.object['password']
 SATORG = $evm.object['orgid']
 vm = $evm.root['vm']
 
-
 # before we continue make sure that this is a RHEL system
 if /rhel/.match(vm.operating_system['product_name']).nil? then
 	$evm.log("info", "The system #{vm.name} is not a RHEL system, it will not be tagged")
