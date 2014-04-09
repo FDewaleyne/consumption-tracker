@@ -92,28 +92,28 @@ org_tag = "org-#{SATORG.to_s}"
 vm.tag_assign("satellite5/#{org_tag}")
 #base channel
 base = @client.call('system.getSubscribedBaseChannel',@key, last_system['id'])
-if not $evm.execute('tag_exists?', 'channel', base['label']) then
-	$evm.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
+if not $evm.execute('tag_exists?', 'channel', base['label'].tr('-','_')) then
+	$evm.execute('tag_create', "channel", :name => base['label'].tr('-','_'), :description => base['name']+"(#{base['label']})")
 end
 $evm.log("info","#{vm.name} uses the channel #{base['label']}")
-vm.tag_assign("channel/#{base['label']}")
+vm.tag_assign("channel/#{base['label'].tr('-','_')}")
 #child channels
 childs = @client.call('system.listSubscribedChildChannels',@key,last_system['id'])
 childs.each do |channel|
-	if not $evm.execute('tag_exists?', 'channel', channel['label']) then
-		$evm.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
+	if not $evm.execute('tag_exists?', 'channel', channel['label'].tr('-','_')) then
+		$evm.execute('tag_create', "channel", :name => channel['label'].tr('-','_'), :description => channel['name']+"(#{channel['label']}")
 	end
 	$evm.log("info","#{vm.name} uses the channel #{channel['label']}")
-	vm.tag_assign("channel/#{channel['label']}")
+	vm.tag_assign("channel/#{channel['label'].tr('-','_')}")
 end
 #entitlements
 entitlements = @client.call('system.getEntitlements', @key, last_system['id'])
 entitlements.each do |entitlement|
-	if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
-		$evm.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
+	if not $evm.execute('tag_exists?', 'satellite5', entitlement.tr('-','_')) then
+		$evm.execute('tag_create', "satellite5", :name => entitlement.tr('-','_'), :description => entitlement)
 	end
 	$evm.log("info","#{vm.name} uses the entitlement #{entitlement}")
-	vm.tag_assign("satellite5/#{entitlement}")
+	vm.tag_assign("satellite5/#{entitlement.tr('-','_')}")
 end
 
 # cleanup  #

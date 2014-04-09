@@ -83,14 +83,14 @@ cluster.vms.each do |vm|
 
 	# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
 	if uuidcollection.has_key?(vm_uuid) then
-		registration_tag = "sat5-id-#{uuidcollection[vm_uuid]['systemid'].to_s}"
+		registration_tag = "sat5__id__#{uuidcollection[vm_uuid]['systemid'].to_s}"
 		if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 			$evm.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 		end
 		vm.tag_assign("registration/#{registration_tag}")
 		$evm.log("info", "#{vm.name} has the profile id #{uuidcollection[vm_uuid]['systemid'].to_s}") 
 		# org_id info
-		org_tag = "org-#{SATORG.to_s}"
+		org_tag = "org__#{SATORG.to_s}"
 		if not $evm.execute('tag_exists?', 'satellite5', org_tag) then
 			orgdetails = @client.call('org.getDetails', @key, SATORG)
 			$evm.execute('tag_create', "satellite5", :name => org_tag, :description => orgdetails['name'] )
@@ -98,28 +98,28 @@ cluster.vms.each do |vm|
 		vm.tag_assign("satellite5/#{org_tag}")
 		#base channel
 		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm_uuid]['systemid'])
-		if not $evm.execute('tag_exists?', 'channel', base['label']) then
-			$evm.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
+		if not $evm.execute('tag_exists?', 'channel', base['label'].tr('-','_')) then
+			$evm.execute('tag_create', "channel", :name => base['label'].tr('-','_'), :description => base['name']+"(#{base['label']})")
 		end
 		$evm.log("info","#{vm.name} is consuming #{base['label']}")
-		vm.tag_assign("channel/#{base['label']}")
+		vm.tag_assign("channel/#{base['label'].tr('-','_')}")
 		#child channels
 		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm_uuid]['systemid'])
 		childs.each do |channel|
-			if $evm.execute('tag_exists?', 'channel', channel['label']) then
-				$evm.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
+			if $evm.execute('tag_exists?', 'channel', channel['label'].tr('-','_')) then
+				$evm.execute('tag_create', "channel", :name => channel['label'].tr('-','_'), :description => channel['name']+"(#{channel['label']})")
 			end
 			$evm.log("info","#{vm.name} uses the channel #{channel['label']}")
-			vm.tag_assign("channel/#{channel['label']}")
+			vm.tag_assign("channel/#{channel['label'].tr('-','_')}")
 		end
 		#entitlements
 		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm_uuid]['systemid'])
 		entitlements.each do |entitlement|
-			if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
-				$evm.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
+			if not $evm.execute('tag_exists?', 'satellite5', entitlement.tr('-','_')) then
+				$evm.execute('tag_create', "satellite5", :name => entitlement.tr('-','_'), :description => entitlement)
 			end
 			$evm.log("info","#{vm.name} uses the entitlement #{entitlement}")
-			vm.tag_assign("satellite5/#{entitlement}")
+			vm.tag_assign("satellite5/#{entitlement.tr('-','_')}")
 		end
 		#duplicate indication
 		if uuidcollection[vm_uuid]['count'] > 1 then
