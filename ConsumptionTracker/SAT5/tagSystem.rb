@@ -7,10 +7,10 @@ $evm.log("info", "Tagging one system - automation started")
 #
 
 # Values in CF #
-SAT_URL = $evm.root['url']
-SAT_LOGIN = $evm.root['username']
-SAT_PWD = $evm.root['password']
-SATORG = $evm.root['orgid']
+SAT_URL = $evm.object['url']
+SAT_LOGIN = $evm.object['username']
+SAT_PWD = $evm.object['password']
+SATORG = $evm.object['orgid']
 vm = $evm.root['vm']
 
 

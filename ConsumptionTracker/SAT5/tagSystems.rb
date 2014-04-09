@@ -8,10 +8,10 @@ $evm.log("info", "Tagging all systems of one cluster - automation started")
 
 
 # initialization
-SAT_URL = $ems.root['url']
-SAT_LOGIN = $ems.root['username']
-SAT_PWD = $ems.root['password']
-SATORG = $ems.root['orgid']
+SAT_URL = $ems.object['url']
+SAT_LOGIN = $ems.object['username']
+SAT_PWD = $ems.object['password']
+SATORG = $ems.object['orgid']
 
 #no need to do anything if the clust er is empty
 cluster = $evms.root['ems_cluster']
