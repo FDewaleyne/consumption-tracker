@@ -105,7 +105,7 @@ cluster.vms.each do |vm|
 			vm.tag_assign('satellite5', entitlement)
 		end
 		#duplicate indication
-		if uuidcollection[vm.attributes['uid_ems']]['count'] > 1:
+		if uuidcollection[vm.attributes['uid_ems']]['count'] > 1 then
 			vm.tag_assign('registration','duplicated')
 			$evm.log("info","the machine #{vm.name} has multiple profiles on the satellite")
 		end
