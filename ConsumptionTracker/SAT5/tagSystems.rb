@@ -38,8 +38,12 @@ require "xmlrpc/client"
 @client = XMLRPC::Client.new2(SAT_URL)
 @key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
 
-#fetch the list of all systems on the satellite
-satsystems = @client.call('system.listSystems',@key)
+#fetch the list of all systems on the satellite ; retry on error
+begin
+	satsystems = @client.call('system.listSystems',@key)
+rescue
+	exit MIQ_RETRY
+end
 #collect the count for the number of uuids, along with which is the oldest
 uuidcollection = Hash.new
 #update the list of systems to include the UUID for each system
