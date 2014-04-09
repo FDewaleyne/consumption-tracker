@@ -1,11 +1,10 @@
-values: 
-url
-username
-password
-orgid
-#note : rethink this to get better password security
+[values]
+ - url (string)
+ - username (string)
+ - password (password)
+ - orgid (int)
 
-methods :
+[methods]
 
-#onesystem : just return the best systemid for that UUID <<< first thing to do
-#onecluster : for each system of the cluster do the tagging
+ - tagSystem on message onesystem  (see tagSystem.rb)
+ - tagSystems on message onecluster (see tagSystems.rb)
