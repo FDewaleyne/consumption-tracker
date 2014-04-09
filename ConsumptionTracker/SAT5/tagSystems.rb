@@ -87,26 +87,28 @@ cluster.vms.each do |vm|
 		if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 			$evm.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 		end
-		vm.tag_assign("organization/#{registration_tag}")
+		vm.tag_assign("registration/#{registration_tag}")
+		$evm.log("info", "#{vm.name} has the profile id #{uuidcollection[vm_uuid]['systemid'].to_s}") 
 		# org_id info
-		org_tag = 'org-'+SATORG.to_s()
+		org_tag = "org-#{SATORG.to_s}"
 		if not $evm.execute('tag_exists?', 'satellite5', org_tag) then
 			orgdetails = @client.call('org.getDetails', @key, SATORG)
 			$evm.execute('tag_create', "satellite5", :name => org_tag, :description => orgdetails['name'] )
 		end
-		vm.tag_assign('satellite5/'+org_tag)
+		vm.tag_assign("satellite5/#{org_tag}")
 		#base channel
 		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm_uuid]['systemid'])
 		if not $evm.execute('tag_exists?', 'channel', base['label']) then
 			$evm.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
 		end
-		vm.tag_assign('channel/'+base['label'])
+		vm.tag_assign("channel/#{base['label']}")
 		#child channels
 		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm_uuid]['systemid'])
 		childs.each do |channel|
 			if $evm.execute('tag_exists?', 'channel', channel['label']) then
 				$evm.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
 			end
+			$evm.log("info","#{vm.name} uses the channel #{channel['label']}")
 			vm.tag_assign("channel/#{channel['label']}")
 		end
 		#entitlements
@@ -115,6 +117,7 @@ cluster.vms.each do |vm|
 			if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
 				$evm.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
 			end
+			$evm.log("info","#{vm.name} uses the entitlement #{entitlement}")
 			vm.tag_assign("satellite5/#{entitlement}")
 		end
 		#duplicate indication
@@ -127,7 +130,7 @@ cluster.vms.each do |vm|
 		vm.tag_assign('registration/unregistered')
 		$evm.log("info","the machine #{vm.name} (#{vm_uuid}) is not registered to the satellite")
 	else
-		$evm.log("info","the machine #{vm.name} is not a RHEL system(#{vm.operating_system['product_name']})- ignoring it")
+		$evm.log("info","the machine #{vm.name} is not a RHEL system (#{vm.operating_system['product_name']})- ignoring it")
 	end
 end
 
