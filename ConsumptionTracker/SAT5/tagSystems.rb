@@ -91,27 +91,27 @@ cluster.vms.each do |vm|
 		if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 			$emv.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 		end
-		vm.tag_assign('organization', registration_tag)
+		vm.tag_assign('organization/'+registration_tag)
 		# org_id info
 		org_tag = 'org-'+SATORG.to_s()
 		if not $evm.execute('tag_exists?', 'satellite5', org_tag) then
 			orgdetails = @client.call('org.getDetails', @key, SATORG)
 			$emv.execute('tag_create', "satellite5", :name => org_tag, :description => orgdetails['name'] )
 		end
-		vm.tag_assign('satellite5', org_tag)
+		vm.tag_assign('satellite5/'+org_tag)
 		#base channel
 		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm_uuid]['systemid'])
 		if not $evm.execute('tag_exists?', 'channel', base['label']) then
 			$emv.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
 		end
-		vm.tag_assign('channel', base['label'])
+		vm.tag_assign('channel/'+base['label'])
 		#child channels
 		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm_uuid]['systemid'])
 		childs.each do |channel|
 			if $evm.execute('tag_exists?', 'channel', channel['label']) then
 				$emv.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
 			end
-			vm.tag_assign('channel', channel['label'])
+			vm.tag_assign('channel/'+channel['label'])
 		end
 		#entitlements
 		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm_uuid]['systemid'])
@@ -119,16 +119,16 @@ cluster.vms.each do |vm|
 			if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
 				$emv.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
 			end
-			vm.tag_assign('satellite5', entitlement)
+			vm.tag_assign('satellite5/'+entitlement)
 		end
 		#duplicate indication
 		if uuidcollection[vm_uuid]['count'] > 1 then
-			vm.tag_assign('registration','duplicated')
+			vm.tag_assign('registration/duplicated')
 			$evm.log("info","the machine #{vm.name} has multiple profiles on the satellite")
 		end
 	elsif not /rhel/.match(vm.operating_system['product_name']).nil? then
 		#this is a red hat system that isn't registered on the satellite - tag is as unregistered
-		vm.tag_assign('registration', 'unregistered')
+		vm.tag_assign('registration/unregistered')
 		$emv.log("info","the machine #{vm.name} is not registered to the satellite")
 	else
 		$evm.log("info","the machine #{vm.name} is not a RHEL system - ignoring it")

@@ -41,7 +41,7 @@ rescue
 end
 if systems.size > 1 then
 	# this system is duplicated!
-	vm.tag_assign("registration", "duplicated")
+	vm.tag_assign("registration/duplicated")
 	$evm.log("info","the system #{vm.name} has multiple profiles on the satellite")
 	# select the last checked in profile
 	# also tag the system as over consuming entitlements since it is over-consuming management by having multiple profiles
@@ -62,7 +62,7 @@ elsif systems.size == 1 then
 	last_system = systems.first
 else
 	# no system found. mark as unregistered
-	vm.tag_assign("registration","unregistered")
+	vm.tag_assign("registration/unregistered")
 	last_system = nil
 	$evm.log("info","the system #{vm.name} is not registered to the satellite")
 	exit MIQ_OK
@@ -73,23 +73,23 @@ registration_tag = 'sat5-id-'+vm_uuid
 if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 	$emv.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 end
-vm.tag_assign('organization', registration_tag)
+vm.tag_assign('organization/'+registration_tag)
 # org_id info
 org_tag = 'org-'+SATORG.to_s()
-vm.tag_assign('satellite5', org_tag)
+vm.tag_assign('satellite5/'+org_tag)
 #base channel
 base = @client.call('system.getSubscribedBaseChannel',@key, last_system['id'])
 if not $evm.execute('tag_exists?', 'channel', base['label']) then
 	$emv.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
 end
-vm.tag_assign('channel', base['label'])
+vm.tag_assign('channel/'+base['label'])
 #child channels
 childs = @client.call('system.listSubscribedChildChannels',@key,last_system['id'])
 childs.each do |channel|
 	if not $evm.execute('tag_exists?', 'channel', channel['label']) then
 		$emv.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
 	end
-	vm.tag_assign('channel', channel['label'])
+	vm.tag_assign('channel/'+channel['label'])
 end
 #entitlements
 entitlements = @client.call('system.getEntitlements', @key, last_system['id'])
@@ -97,7 +97,7 @@ entitlements.each do |entitlement|
 	if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
 		$emv.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
 	end
-	vm.tag_assign('satellite5', entitlement)
+	vm.tag_assign('satellite5/'+entitlement)
 end
 
 # cleanup  #
