@@ -44,7 +44,13 @@ satsystems = @client.call('system.listSystems',@key)
 uuidcollection = Hash.new
 #update the list of systems to include the UUID for each system
 satsystems.each do |satsystem| 
-	uuid = @client.call('system.getUUID',@key,satsystem['id'])
+	#ignore objects with no uuid
+	begin
+		# remove any - when they are present for better comparisons
+		uuid = @client.call('system.getUUID',@key,satsystem['id']).tr('-','')
+	rescue
+		next
+	end
 	if uuidcollection.has_key?(uuid) then
 		#we have a duplicate, increase count by one
 		uuidcollection[uuid]['count'] += 1
@@ -67,10 +73,12 @@ cluster.vms.each do |vm|
 	#remove registration and satellite 5 tags
 	#we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
 	vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(tag.to_s).nil? }
+	# remove - for better comparisons
+	vm_uuid = vm.attributes['uid_ems'].tr('-','')
 
 	# for each vm that matches add the satellite tags, otherwise tag as unregistered if the os has "red hat" in it
-	if uuidcollection.has_key?(vm.attributes['uid_ems']) then
-		registration_tag = 'sat5-id-'+uuidcollection[vm.attributes['uid_ems']].to_s()
+	if uuidcollection.has_key?(vm_uuid) then
+		registration_tag = 'sat5-id-'+uuidcollection[vm_uuid]['systemid']
 		if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 			$emv.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 		end
@@ -83,13 +91,13 @@ cluster.vms.each do |vm|
 		end
 		vm.tag_assign('satellite5', org_tag)
 		#base channel
-		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm.attributes['uid_ems']])
+		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm_uuid]['systemid'])
 		if not $evm.execute('tag_exists?', 'channel', base['label']) then
 			$emv.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
 		end
 		vm.tag_assign('channel', base['label'])
 		#child channels
-		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm.attributes['uid_ems']])
+		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm_uuid]['systemid'])
 		childs.each do |channel|
 			if $evm.execute('tag_exists?', 'channel', channel['label']) then
 				$emv.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
@@ -97,7 +105,7 @@ cluster.vms.each do |vm|
 			vm.tag_assign('channel', channel['label'])
 		end
 		#entitlements
-		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm.attributes['uid_ems']])
+		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm_uuid]['systemid'])
 		entitlements.each do |entitlement|
 			if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
 				$emv.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
@@ -105,7 +113,7 @@ cluster.vms.each do |vm|
 			vm.tag_assign('satellite5', entitlement)
 		end
 		#duplicate indication
-		if uuidcollection[vm.attributes['uid_ems']]['count'] > 1 then
+		if uuidcollection[vm_uuid]]['count'] > 1 then
 			vm.tag_assign('registration','duplicated')
 			$evm.log("info","the machine #{vm.name} has multiple profiles on the satellite")
 		end
