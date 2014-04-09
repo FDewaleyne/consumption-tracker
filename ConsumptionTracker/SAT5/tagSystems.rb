@@ -21,15 +21,15 @@ if cluster.vms.nil? then
 end
 #making sure the basic tags & categories exist for the other scripts
 if not $evm.execute('category_exists?','registration') then
-	$evm.execute('category_create', :name => 'registration', :single_value => false, :description => 'Category holding the registration information for a machine')
-	$evm.execute('tag_create', 'registration', :name => 'unregistered', :description => 'indicates a system not registered with a registration system')
-	$evm.execute('tag_create', 'registration', :name => 'duplicated', :description => 'indicates a system which has 2 profiles at least on the satellite')
+	$evm.execute('category_create', :name => 'registration', :single_value => false, :description => 'Registration information')
+	$evm.execute('tag_create', 'registration', :name => 'unregistered', :description => 'not registered')
+	$evm.execute('tag_create', 'registration', :name => 'duplicated', :description => 'duplicated on management system')
 end
 if not $evm.execute('category_exists?','channel') then
-	$evm.execute('category_create',:name => 'channel', :single_value => false, :description => 'Category holding the channels systems are registered to')
+	$evm.execute('category_create',:name => 'channel', :single_value => false, :description => 'Channel usage information')
 end
 if not $evm.execute('category_exists?','satellite5') then
-	$evm.execute('category_create',:name => 'satellite5', :single_value => false, :description => 'Information relative to satellite 5 registration')
+	$evm.execute('category_create',:name => 'satellite5', :single_value => false, :description => 'Satellite 5 details')
 end
 
 #connect
@@ -101,6 +101,7 @@ cluster.vms.each do |vm|
 		if not $evm.execute('tag_exists?', 'channel', base['label']) then
 			$evm.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
 		end
+		$evm.log("info","#{vm.name} is consuming #{base['label']}")
 		vm.tag_assign("channel/#{base['label']}")
 		#child channels
 		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm_uuid]['systemid'])
