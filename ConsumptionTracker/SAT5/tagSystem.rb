@@ -22,8 +22,12 @@ end
 
 # init part #
 require "xmlrpc/client"
-@client = XMLRPC::Client.new2(SAT_URL)
-@key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
+begin
+	@client = XMLRPC::Client.new2(SAT_URL)
+	@key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
+rescue
+	exit MIQ_ABORT
+end
 
 #remove registration and satellite 5 tags
 #we want to remove channels, any active registration tag that is sat5, unregistered or duplicated
@@ -33,7 +37,7 @@ vm.tags.keep_if { |tag| /satellite5|sat5|unregistered|duplicated|channel/.match(
 begin
 	systems = @client.call('system.search.uuid',@key,vm_uuid)
 rescue
-	exit MIQ_RETRY
+	exit MIQ_STOP
 end
 if systems.size > 1 then
 	# this system is duplicated!

@@ -35,14 +35,19 @@ end
 
 #connect
 require "xmlrpc/client"
-@client = XMLRPC::Client.new2(SAT_URL)
-@key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
-
-#fetch the list of all systems on the satellite ; retry on error
+#if connection fails, fail.
 begin
+	@client = XMLRPC::Client.new2(SAT_URL)
+	@key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
+rescue
+	exit MIQ_ABORT
+end
+#if the call fails, retry later
+begin
+	#fetch the list of all systems on the satellite ; retry on error
 	satsystems = @client.call('system.listSystems',@key)
 rescue
-	exit MIQ_RETRY
+	exit MIQ_STOP
 end
 #collect the count for the number of uuids, along with which is the oldest
 uuidcollection = Hash.new
@@ -117,7 +122,7 @@ cluster.vms.each do |vm|
 			vm.tag_assign('satellite5', entitlement)
 		end
 		#duplicate indication
-		if uuidcollection[vm_uuid]]['count'] > 1 then
+		if uuidcollection[vm_uuid]['count'] > 1 then
 			vm.tag_assign('registration','duplicated')
 			$evm.log("info","the machine #{vm.name} has multiple profiles on the satellite")
 		end
