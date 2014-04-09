@@ -12,7 +12,20 @@ SAT_LOGIN = $evm.object['username']
 SAT_PWD = $evm.object['password']
 SATORG = $evm.object['orgid']
 vm = $evm.root['vm']
+#format the uuid so that we may use it
 vm_uuid = vm.attributes['uid_ems'].tr('-','')
+#making sure the basic tags & categories exist for the other scripts
+if not $evm.execute('category_exists?','registration') then
+	$evm.execute('category_create', :name => 'registration', :single_value => false, :description => 'Category holding the registration information for a machine')
+	$evm.execute('tag_create', 'registration', :name => 'unregistered', :description => 'indicates a system not registered with a registration system')
+	$evm.execute('tag_create', 'registration', :name => 'duplicated', :description => 'indicates a system which has 2 profiles at least on the satellite')
+end
+if not $evm.execute('category_exists?','channel') then
+	$evm.execute('category_create',:name => 'channel', :single_value => false, :description => 'Category holding the channels systems are registered to')
+end
+if not $evm.execute('category_exists?','satellite5') then
+	$evm.execute('category_create',:name => 'satellite5', :single_value => false, :description => 'Information relative to satellite 5 registration')
+end
 
 # before we continue make sure that this is a RHEL system
 if /rhel/.match(vm.operating_system['product_name']).nil? then

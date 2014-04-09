@@ -1,10 +1,9 @@
 [values]
  - url (string)
  - username (string)
- - password (password)
+ - password (string - password causes problems)
  - orgid (int)
 
 [methods]
-
  - tagSystem on message onesystem  (see tagSystem.rb)
  - tagSystems on message onecluster (see tagSystems.rb)
