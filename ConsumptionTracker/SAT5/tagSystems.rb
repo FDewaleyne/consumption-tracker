@@ -129,7 +129,7 @@ cluster.vms.each do |vm|
 	elsif not /rhel/.match(vm.operating_system['product_name']).nil? then
 		#this is a red hat system that isn't registered on the satellite - tag is as unregistered
 		vm.tag_assign('registration/unregistered')
-		$emv.log("info","the machine #{vm.name} is not registered to the satellite")
+		$evm.log("info","the machine #{vm.name} is not registered to the satellite")
 	else
 		$evm.log("info","the machine #{vm.name} is not a RHEL system - ignoring it")
 	end
