@@ -84,7 +84,7 @@ end
 #tagging with the informations since this system is registered
 registration_tag = 'sat5-id-'+vm_uuid
 if not $evm.execute('tag_exists?', 'registration', registration_tag) then
-	$emv.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
+	$evm.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
 end
 vm.tag_assign('organization/'+registration_tag)
 # org_id info
@@ -93,14 +93,14 @@ vm.tag_assign('satellite5/'+org_tag)
 #base channel
 base = @client.call('system.getSubscribedBaseChannel',@key, last_system['id'])
 if not $evm.execute('tag_exists?', 'channel', base['label']) then
-	$emv.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
+	$evm.execute('tag_create', "channel", :name => base['label'], :description => base['name'])
 end
 vm.tag_assign('channel/'+base['label'])
 #child channels
 childs = @client.call('system.listSubscribedChildChannels',@key,last_system['id'])
 childs.each do |channel|
 	if not $evm.execute('tag_exists?', 'channel', channel['label']) then
-		$emv.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
+		$evm.execute('tag_create', "channel", :name => channel['label'], :description => channel['name'])
 	end
 	vm.tag_assign('channel/'+channel['label'])
 end
@@ -108,7 +108,7 @@ end
 entitlements = @client.call('system.getEntitlements', @key, last_system['id'])
 entitlements.each do |entitlement|
 	if not $evm.execute('tag_exists?', 'satellite5', entitlement) then
-		$emv.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
+		$evm.execute('tag_create', "satellite5", :name => entitlement, :description => entitlement)
 	end
 	vm.tag_assign('satellite5/'+entitlement)
 end
