@@ -10,4 +10,6 @@ requirements :
 - the UUID and/or ip adress  of your systems is pushed to your hypervisors (so it can be reported to cloudforms)
 
 
+---
 
+to install, either recreate the hierarchy from the project or import the dump into cloudforms.
