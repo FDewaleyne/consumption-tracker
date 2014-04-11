@@ -31,6 +31,17 @@ end
 if not $evm.execute('category_exists?','satellite5') then
 	$evm.execute('category_create',:name => 'satellite5', :single_value => false, :description => 'Satellite 5 details')
 end
+if not $evm.execute('category_exists?','sat5organization')
+	$evm.execute('category_create',:name => 'sat5organization', :single_value => true, :description => 'Satellite 5 Organization')
+end
+if not $evm.execute('category_exists?','sat5entitlements')
+	$evm.execute('category_create',:name => 'sat5entitlements', :single_value => false, :description => 'Satellite 5 entitlements')
+	$evm.execute('tag_create', 'sat5entitlements', :name => 'enterprise_entitled', :description => 'Management (Base)')
+	$evm.execute('tag_create', 'sat5entitlements', :name => 'monitoring_entitled', :description => 'Monitoring (Add-On)')
+	$evm.execute('tag_create', 'sat5entitlements', :name => 'provisioning_entitled', :description => 'Provisioning (Add-On)')
+	$evm.execute('tag_create', 'sat5entitlements', :name => 'virtualization_host', :description => 'Virtualization (Add-On)')
+	$evm.execute('tag_create', 'sat5entitlements', :name => 'virtualization_host_platform', :description => 'Virtualization Platform (Add-On)')
+end
 
 #connect
 require "xmlrpc/client"
@@ -39,6 +50,7 @@ begin
 	@client = XMLRPC::Client.new2(SAT_URL)
 	@key = @client.call('auth.login', SAT_LOGIN, SAT_PWD)
 rescue
+	$evm.log("error","unable to log into the satellite, aborting")
 	exit MIQ_ABORT
 end
 #if the call fails, retry later
@@ -85,17 +97,17 @@ cluster.vms.each do |vm|
 	if uuidcollection.has_key?(vm_uuid) then
 		registration_tag = "sat5__id__#{uuidcollection[vm_uuid]['systemid'].to_s}"
 		if not $evm.execute('tag_exists?', 'registration', registration_tag) then
-			$evm.execute('tag_create', "registration", :name => registration_tag, :description => "registrationtag for satellite 5")
+			$evm.execute('tag_create', "registration", :name => registration_tag, :description => "satellite 5 registration tag for #{uuidcollection[vm_uuid]['systemid'].to_s}")
 		end
 		vm.tag_assign("registration/#{registration_tag}")
 		$evm.log("info", "#{vm.name} has the profile id #{uuidcollection[vm_uuid]['systemid'].to_s}") 
 		# org_id info
 		org_tag = "org__#{SATORG.to_s}"
-		if not $evm.execute('tag_exists?', 'satellite5', org_tag) then
+		if not $evm.execute('tag_exists?', 'sat5organization', org_tag) then
 			orgdetails = @client.call('org.getDetails', @key, SATORG)
-			$evm.execute('tag_create', "satellite5", :name => org_tag, :description => orgdetails['name'] )
+			$evm.execute('tag_create', "sat5organization", :name => org_tag, :description => orgdetails['name'] )
 		end
-		vm.tag_assign("satellite5/#{org_tag}")
+		vm.tag_assign("sat5organization/#{org_tag}")
 		#base channel
 		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm_uuid]['systemid'])
 		if not $evm.execute('tag_exists?', 'channel', base['label'].tr('-','_')) then
@@ -115,11 +127,9 @@ cluster.vms.each do |vm|
 		#entitlements
 		entitlements = @client.call('system.getEntitlements', @key, uuidcollection[vm_uuid]['systemid'])
 		entitlements.each do |entitlement|
-			if not $evm.execute('tag_exists?', 'satellite5', entitlement.tr('-','_')) then
-				$evm.execute('tag_create', "satellite5", :name => entitlement.tr('-','_'), :description => entitlement)
-			end
 			$evm.log("info","#{vm.name} uses the entitlement #{entitlement}")
-			vm.tag_assign("satellite5/#{entitlement.tr('-','_')}")
+			#all entitlements are defined from the list populated when executing this script the first time
+			vm.tag_assign("satellite5/#{entitlement}")
 		end
 		#duplicate indication
 		if uuidcollection[vm_uuid]['count'] > 1 then
