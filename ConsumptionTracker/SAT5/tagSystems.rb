@@ -129,7 +129,7 @@ cluster.vms.each do |vm|
 		entitlements.each do |entitlement|
 			$evm.log("info","#{vm.name} uses the entitlement #{entitlement}")
 			#all entitlements are defined from the list populated when executing this script the first time
-			vm.tag_assign("satellite5/#{entitlement}")
+			vm.tag_assign("sat5entitlements/#{entitlement}")
 		end
 		#duplicate indication
 		if uuidcollection[vm_uuid]['count'] > 1 then

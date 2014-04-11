@@ -128,7 +128,7 @@ entitlements = @client.call('system.getEntitlements', @key, last_system['id'])
 entitlements.each do |entitlement|
 	$evm.log("info","#{vm.name} uses the entitlement #{entitlement}")
 	#the entitlements don't vary between the 5 existing ones
-	vm.tag_assign("sat5entitlement/#{entitlement}")
+	vm.tag_assign("sat5entitlements/#{entitlement}")
 end
 
 # cleanup  #
