@@ -95,7 +95,7 @@ else
 end
 
 #tagging with the informations since this system is registered
-registration_tag = "sat5-id-#{last_system['id'].to_s}"
+registration_tag = "sat5__id__#{last_system['id'].to_s}"
 if not $evm.execute('tag_exists?', 'registration', registration_tag) then
 	$evm.execute('tag_create', "registration", :name => registration_tag, :description => "satellite 5 registration tag for #{last_system['id'].to_s}")
 end
