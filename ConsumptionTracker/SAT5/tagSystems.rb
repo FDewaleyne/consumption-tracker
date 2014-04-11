@@ -111,7 +111,7 @@ cluster.vms.each do |vm|
 		#base channel
 		base = @client.call('system.getSubscribedBaseChannel',@key,uuidcollection[vm_uuid]['systemid'])
 		if not $evm.execute('tag_exists?', 'channel', base['label'].tr('-','_')) then
-			$evm.execute('tag_create', "channel", :name => base['label'].tr('-','_'), :description => base['name']+"(#{base['label']})")
+			$evm.execute('tag_create', "channel", :name => base['label'].tr('-','_'), :description => base['label']+" (#{base['name']})")
 		end
 		$evm.log("info","#{vm.name} is consuming #{base['label']}")
 		vm.tag_assign("channel/#{base['label'].tr('-','_')}")
@@ -119,7 +119,7 @@ cluster.vms.each do |vm|
 		childs = @client.call('system.listSubscribedChildChannels',@key,uuidcollection[vm_uuid]['systemid'])
 		childs.each do |channel|
 			if $evm.execute('tag_exists?', 'channel', channel['label'].tr('-','_')) then
-				$evm.execute('tag_create', "channel", :name => channel['label'].tr('-','_'), :description => channel['name']+"(#{channel['label']})")
+				$evm.execute('tag_create', "channel", :name => channel['label'].tr('-','_'), :description => channel['label']+" (#{channel['name']})")
 			end
 			$evm.log("info","#{vm.name} uses the channel #{channel['label']}")
 			vm.tag_assign("channel/#{channel['label'].tr('-','_')}")

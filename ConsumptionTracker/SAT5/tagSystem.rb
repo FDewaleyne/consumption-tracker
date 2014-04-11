@@ -110,7 +110,7 @@ vm.tag_assign("sat5organization/#{org_tag}")
 #base channel
 base = @client.call('system.getSubscribedBaseChannel',@key, last_system['id'])
 if not $evm.execute('tag_exists?', 'channel', base['label'].tr('-','_')) then
-	$evm.execute('tag_create', "channel", :name => base['label'].tr('-','_'), :description => base['name']+" (#{base['label']})")
+	$evm.execute('tag_create', "channel", :name => base['label'].tr('-','_'), :description => base['label']+" (#{base['name']})")
 end
 $evm.log("info","#{vm.name} uses the channel #{base['label']}")
 vm.tag_assign("channel/#{base['label'].tr('-','_')}")
@@ -118,7 +118,7 @@ vm.tag_assign("channel/#{base['label'].tr('-','_')}")
 childs = @client.call('system.listSubscribedChildChannels',@key,last_system['id'])
 childs.each do |channel|
 	if not $evm.execute('tag_exists?', 'channel', channel['label'].tr('-','_')) then
-		$evm.execute('tag_create', "channel", :name => channel['label'].tr('-','_'), :description => channel['name']+" (#{channel['label']}")
+		$evm.execute('tag_create', "channel", :name => channel['label'].tr('-','_'), :description => channel['label']+" (#{channel['name']})")
 	end
 	$evm.log("info","#{vm.name} uses the channel #{channel['label']}")
 	vm.tag_assign("channel/#{channel['label'].tr('-','_')}")
